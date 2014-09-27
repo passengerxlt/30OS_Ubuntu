@@ -1,0 +1,16 @@
+1.  emacs支持中文。命令行启动LC_CTYPE='zh_CH.UTF-8' emacs，中文输入法出现，但输入不了。CSDN中解决。不同的系统环境方法不确定通行。
+2.  NASM 8086汇编器，也支持32位，支持一系列CPU。ORG 模块首地址。
+3.  MOV 仅次于DB，源自“move”，其实“copy“。
+4.  8个16寄存器，AX，CX，DX，BX，SP，BP，SI，DI。各有意义，虽然差不多可通用，但程序简洁不一样。ADD CX，0x1234-》81 C1 34 12， 4字节，ADD AX，0x1234-》05 34 12， 3字节。
+5.  8个8位寄存器，AL，CL，DL，BL，AH，CH，DH，CH。其他16位寄存器没有高低寄存器，需借用。
+6.  32位寄存器，一部分与16位共用，但高16位就需移位了。
+7.  段寄存器，ES，CS，SS，DS，FS,GS。
+8.  标号仅仅单纯的数字，“标号的地方对应的内存地址”就是那个标号的值。
+9.  []记号代表内存。内存。CPU存储能力很差。CPU通过管脚与内存交互。BYTE，WORD，DWORD。可以是常数，也可以是寄存器（有限个）。
+10. ADD，CMP，JE。
+11. INT，BIOS。
+12. 为什么是0x7c00？BIOS本身，BIOS所用等。内存分布图。ox00007c00-0x00007dff：启动区内容的装载地址（512）.
+13. linux脚本，chmod +x filename 修改脚本属性，./filename执行
+14. nasm -o -l.
+15. qemu-img create boot.img 1440k默认raw格式。dd 写入ipl.bin 到软盘第一个扇区。
+16. Makefile文件。规则、命令。默认命令。make命令。
