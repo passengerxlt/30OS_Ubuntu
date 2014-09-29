@@ -33,7 +33,6 @@
 entry:
 	MOV	EAX, 0x12345678		; IA-32 real-address mode 可以使用32寄存器
 	MOV	AX, 0
-	MOV	DS, AX
 	MOV	DWORD	[8000], 0x12345678
 	
 	

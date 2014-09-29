@@ -33,7 +33,7 @@ VRAM	EQU	0x0ff8
 	OUT	0x21, AL
 	NOP
 
-	OUT	0xa1, AL
+	OUT	0xa1, AL	;写两个端口，初始化关闭PIC，也算关了NMIs。
 
 	CLI
 
@@ -43,7 +43,7 @@ VRAM	EQU	0x0ff8
 	CALL	waitkbdout
 	MOV	AL, 0xdf
 	OUT	0x60, AL
-	CALL	waitkbdout
+	CALL	waitkbdout	; 键盘控制器的附属端口，用于打开A20地址线
 
 ;[INSTRSET "i486p"]	
 
@@ -51,8 +51,8 @@ VRAM	EQU	0x0ff8
 	MOV	EAX, CR0
 	AND	EAX, 0x7fffffff
 	OR	EAX, 0x00000001
-	MOV	CR0, EAX
-	JMP	pipelineflush
+	MOV	CR0, EAX	; 进入保护模式，保护模式的特性只是在相应的地方起作用，如跳转时的检测，分页的检测等，此时由于没有改变CS的值，CPU使用的基地址没有改变（基地址只在改变CS的时读取选择子然后查找描述符时改变），所以程序继续执行，几乎和刚刚的实地址模式没有区别。	
+	JMP	pipelineflush 	
 pipelineflush:
 	MOV	AX, 1*8
 	MOV	DS, AX
@@ -65,7 +65,7 @@ pipelineflush:
 	MOV	ESI, bootpack
 	MOV	EDI, BOTPAK
 	MOV	ECX, 512 * 1024/4
-	CALL	memcpy
+	CALL	memcpy	; 短CALL，没有改变CS的值。
 
 ;
 	MOV	ESI, 0x7c00
@@ -82,7 +82,6 @@ pipelineflush:
 	SUB	ECX,512/4
 	CALL	memcpy
 
-;
 ;	MOV	EBX, BOTPAK
 ;	MOV	ECX, [EBX+16]
 ;  	ADD	ECX, 3
@@ -93,8 +92,8 @@ pipelineflush:
 ;	MOV	EDI, [EBX+12]
 ;	CALL	memcpy		
 skip:
-;	MOV	ESP, [EBX+12]
-	JMP	DWORD 2*8:0x00000000
+;	MOV	ESP, [EBX+12]	; 原作者的程序有文件格式，入口需查找偏移，本程序使用ELF格式文件，然后从文件中剥离了汇编代码，直接跳转，不用查找偏移
+	JMP	DWORD 2*8:0x00000000 ; 改变CS的值，基地址也随之改变
 
 waitkbdout:
 	IN	AL, 0x64
