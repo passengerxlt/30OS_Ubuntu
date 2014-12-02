@@ -60,12 +60,6 @@ pipelineflush:
 	MOV	GS, AX
 	MOV	SS, AX		; 数据段，堆栈段等使用同一个段。已进入保护模式，加载段寄存器时，可见部分和不可见部分都会修改。
 
-; 32位代码拷贝到BOTPAK=0x00280000处
-	MOV	ESI, bootpack
-	MOV	EDI, BOTPAK
-	MOV	ECX, 512 * 1024/4
-	CALL	memcpy	; 短CALL，没有改变CS的值。
-
 ; 把0x7c00处即MBR或第一个扇区代码拷贝到DSKCAC=0x00100000处
 	MOV	ESI, 0x7c00
 	MOV	EDI, DSKCAC
@@ -81,6 +75,11 @@ pipelineflush:
 	SUB	ECX,512/4
 	CALL	memcpy
 
+; 32位代码拷贝到BOTPAK=0x00280000处，按elf格式展开
+;	PUSH	BOTPAK		
+	PUSH	bootpack
+	CALL	initharibsys
+
 ;	MOV	EBX, BOTPAK
 ;	MOV	ECX, [EBX+16]
 ;  	ADD	ECX, 3
@@ -92,7 +91,7 @@ pipelineflush:
 ;	CALL	memcpy		
 skip:
 ;	MOV	ESP, [EBX+12]	;
-	JMP	DWORD 2*8:0x00000080 ; 改变CS的值，基地址也随之改变，剥离出文件格式信息时失败，还是使用入口偏移，此ELF功能简单，偏移几乎不变，也不需要映射段和重定位。
+	JMP	DWORD 2*8:0x00001000 ; 改变CS的值，基地址也随之改变，剥离出文件格式信息时失败，还是使用入口偏移，此ELF功能简单，偏移几乎不变，也不需要映射段和重定位。
 
 waitkbdout:
 	IN	AL, 0x64
@@ -118,4 +117,43 @@ GDT0:
 GDTR0:
 	DW	8*3-1
 	DD	GDT0
+
+initharibsys:
+	PUSH 	EBP
+	MOV	EBP, ESP 
+	MOV	AX, [EBP+0x6] ; [EBP+0x6] elf文件所在的内存地址
+	MOVZX	EAX, AX
+	MOV	CX, [EAX+0x2c] ; e_phnum;
+	MOVZX	ECX, CX
+	MOV	EBX, [EAX+0x1c]	; e_phoff
+	ADD	EBX, EAX	; EBX->ph
+COPYSEC:
+	CMP	ECX, 0
+	JE	ret
+	MOV	ESI, [EBX+0x4]
+	ADD	ESI, EAX
+	MOV	EDI, [EBX+0x8]
+	PUSH	ECX
+	MOV	ECX, [EBX+0x10]
+	ADD	ECX, 3
+	SHR	ECX, 2
+	CMP	ECX, 0
+	JE	ret0
+	PUSH	EAX
+	CALL	memcpy
+	POP	EAX
+	POP	ECX
+	SUB	ECX, 1
+	MOV	DX, [EAX+0x2a]
+	MOVZX	EDX, DX
+	ADD	EBX, EDX
+	JMP	COPYSEC
+ret0:
+	POP	ECX
+ret:
+	MOV	ESI, [EAX+0x18]
+	SUB	ESI, 0x280000
+	JMP	DWORD 2*8:0
+	RET
+	
 bootpack:	

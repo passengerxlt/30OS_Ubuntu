@@ -17,7 +17,7 @@ VRAM	EQU	0x0ff8
 ;
 	MOV	AL, 0x13
 	MOV	AH, 0x00
-	INT	0x10
+	INT	0x10		; 设置VGA显卡，320x200x8位彩色
 	MOV	BYTE [VMODE], 8
 	MOV	WORD [SCRNX], 320
 	MOV	WORD [SCRNY], 200
@@ -45,8 +45,7 @@ VRAM	EQU	0x0ff8
 	OUT	0x60, AL
 	CALL	waitkbdout	; 键盘控制器的附属端口，用于打开A20地址线
 
-;[INSTRSET "i486p"]	
-
+;[INSTRSET "i486p"]，虽然是16位指令，但可以使用32位寄存器之类的。
 	LGDT 	[GDTR0]
 	MOV	EAX, CR0
 	AND	EAX, 0x7fffffff
@@ -54,26 +53,26 @@ VRAM	EQU	0x0ff8
 	MOV	CR0, EAX	; 进入保护模式，保护模式的特性只是在相应的地方起作用，如跳转时的检测，分页的检测等，此时由于没有改变CS的值，CPU使用的基地址没有改变（基地址只在改变CS的时读取选择子然后查找描述符时改变），所以程序继续执行，几乎和刚刚的实地址模式没有区别。	
 	JMP	pipelineflush 	
 pipelineflush:
-	MOV	AX, 1*8
+	MOV	AX, 1*8		; 段选择子，16位。高13位代表序号，然后TI，RPL
 	MOV	DS, AX
 	MOV	ES, AX
 	MOV	FS, AX
 	MOV	GS, AX
-	MOV	SS, AX		;已经进入保护模式，再加载段寄存器意义已经不同
+	MOV	SS, AX		; 数据段，堆栈段等使用同一个段。已进入保护模式，加载段寄存器时，可见部分和不可见部分都会修改。
 
-;
+; 32位代码拷贝到BOTPAK=0x00280000处
 	MOV	ESI, bootpack
 	MOV	EDI, BOTPAK
 	MOV	ECX, 512 * 1024/4
 	CALL	memcpy	; 短CALL，没有改变CS的值。
 
-;
+; 把0x7c00处即MBR或第一个扇区代码拷贝到DSKCAC=0x00100000处
 	MOV	ESI, 0x7c00
 	MOV	EDI, DSKCAC
 	MOV	ECX, 512/4
 	CALL	memcpy
 
-;
+; 把从0x8200即第二个扇区开始处代码拷贝到DSKCAC+0x200处，共18＊2 - 1个扇区，所以前18个柱面现在在DSKCAC=0x00100000处。
 	MOV	ESI, DSKCAC0+512
 	MOV	EDI, DSKCAC+512
 	MOV	ECX, 0
