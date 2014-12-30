@@ -12,7 +12,7 @@ asmfunc.o : asmfunc.asm Makefile
 
 bootpack.bin : bootpack.c asmfunc.o Makefile
 	gcc -m32 -fno-stack-protector -c bootpack.c -o bootpack.o
-	ld -m elf_i386 bootpack.o asmfunc.o -o bootpack.elf
+	ld -m elf_i386 -Ttext 0x280000 bootpack.o asmfunc.o -o bootpack.elf
 #	objcopy	-O binary bootpack.elf bootpack.bin
 	cp bootpack.elf bootpack.bin
 

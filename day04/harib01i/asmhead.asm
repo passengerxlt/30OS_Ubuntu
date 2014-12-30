@@ -153,7 +153,18 @@ ret0:
 ret:
 	MOV	ESI, [EAX+0x18]
 	SUB	ESI, 0x280000
-	JMP	DWORD 2*8:0
+;	PUSH	2*8
+;	PUSH	SI
+;	RETF			; 通过RETF指令修改CS：IP			
+;	JMP	2*8:ESI		; JMP far 修改CS：IP，但不支持变量，如ESI
+; 	JMP	DWORD 2*8:0x1234	; 没有问题
+	MOV 	DWORD [offset], ESI 	; 使用嵌入式，硬编码
+	DB 0x66
+	DB 0xea
+offset:
+	DD 0
+selector:
+	DW 2*8
 	RET
 	
 bootpack:	
