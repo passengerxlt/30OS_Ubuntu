@@ -1,0 +1,37 @@
+1. GDT中，段基址为什么要分3段？主要是为了与80286时代的程序兼容。
+2. 设计上，CPU单独只能处理一个中断。IBM在主板上增设了几个辅助芯片PIC。从PIC通过第2号IRQ与主PIC相连。
+3. IMR（interrupt mask register），ICW（initial control word)
+4. PIC的ICW2可以决定IRQ以哪一号中断通知CPU。介绍：中断发生以后，如果CPU可以受理这个中断，CPU就会命令PIC发送2个字节的数据。CPU用IN或OUT传送数据。PIC发送“0xcd 0x??“两个字节。由于电路设计的原因，这两个字节的数据在CPU看来，与从内存读进来的程序是完全一样的。也就是说如果CPU可以受理这个中断，则下一条指令从PIC端口取，而PIC存放的数据刚好是INT 0x??.
+
+过程：
+1. 按键盘，键盘处理终端没有被触发。
+	查看调试日志，IP > CS段的界限，cpu出错，重启。调试，原来设置IDT项的时候，设置的地址在elf文件中的虚拟地址，忘记考虑段的基地址了。
+
+总结：
+C语言方便完成任务，所以asmhead的作用尽早跳转到保护模式，执行elf文件，麻烦的功能用c语言实现，必须用汇编实现的功能，由c模块调用汇编模块完成。
+
+学习：
+GDT，IDT，不同的描述符及作用，保护模式如何使用的？
+
+/* 各模块功能记录一下 */
+1. IPL10.asm IPL（initial program loader）启动程序加载器。
+	磁盘位置：MBR。
+	内存位置：由BIOS加载到0x7c00-0x7dff。
+	功能：加载软盘前10个柱面-MBR，共10 ＊ 18 ＊ 2 - 1个扇区到0x8200-0x34fff
+2. asmhead.asm 操作系统所在整个文件的前半部分。
+	磁盘位置：haribote.sys开始处。软盘偏移0x4400
+	内存位置：MBR加载到0xc400.0x8200+0x4400-0x200；
+	功能：关闭PIC，打开A20，CR0设置保护模式，GDTR，把0x7c00处即MBR或第一个扇区代码拷贝到DSKCAC=0x00100000处，把从0x8200即第二个扇区开始处代码拷贝到DSKCAC+0x200处，共18＊2 - 1个扇区，所以前18个柱面现在在DSKCAC=0x00100000处。把asmhead.asm后面的代码即32位代码拷贝到BOTPAK=0x00280000处，按elf格式展开，大小为elf文件大小。跳转到入口，真正进入32位保护模式。
+									
+							 ___软盘镜像_____
+	IPL10.asm------------------ipl10.bin---写入-----｜->  	MBR	｜-----BIOS加载----7c00---asmhead加载----0x00100000
+							｜——————————————｜
+	asmhead.asm--asmhead.bin-｜			｜		｜
+				 ｜-haribote.sys-复制---｜->haribote.sys｜-----IPL加载-----c400---asmhead加载----0x00104400
+	bootpack.c--bootpack.elf-｜			｜		｜	asmhead再把bootpack.elf展开到0x00280000
+							｜——————————————｜
+				
+3. asmfunc.asm c语言需要的使用汇编才能完成的功能函数。
+	功能：端口操作，寄存器操作等。
+4. bootpack.c 内核
+5. dsctbl.c graphic.c int.c 内核的功能模块
