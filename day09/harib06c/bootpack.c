@@ -51,7 +51,7 @@ void HariMain(void)
 	 i = fifo8_get(&keyfifo);
 	 io_sti();
 	 sprintf(s, "0x%x", i);
-	 boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 15, 31);
+	 boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 16, 8 * 8, 31);
 	 putfonts8_asc(binfo->vram, binfo->scrnx, 0, 16, COL8_FFFFFF, s);
        } else if (0 != fifo8_status(&mousefifo)) {
 	 i = fifo8_get(&mousefifo);
@@ -67,8 +67,8 @@ void HariMain(void)
 	   if (0 != (mdec.btn & 0x04)) {
 	     s[2] = 'C';
 	   }
-	   boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 32, 16, 32 + 15 * 8 - 1, 31);
-	   putfonts8_asc(binfo->vram, binfo->scrnx, 32, 16, COL8_FFFFFF, s);
+	   boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 64, 16, 64 + 24 * 8 - 1, 31);
+	   putfonts8_asc(binfo->vram, binfo->scrnx, 64, 16, COL8_FFFFFF, s);
 	   /* 鼠标指针移动 */
 	   boxfill8(binfo->vram, binfo->scrnx, COL8_008484, mx, my, mx + 15, my + 15); /* 隐藏鼠标*/
 	   mx += mdec.x;
@@ -85,8 +85,8 @@ void HariMain(void)
 	   if (my > binfo->scrny - 16) {
 	     my = binfo->scrny - 16;
 	   }
-	   sprintf(s, "(%x, %x)", mx, my);
-	   boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 0, 79, 15); /* 隐藏坐标*/
+	   sprintf(s, "(0x%x, 0x%x)", mx, my);
+	   boxfill8(binfo->vram, binfo->scrnx, COL8_008484, 0, 0, 8 * 16, 15); /* 隐藏坐标*/
 	   putfonts8_asc(binfo->vram, binfo->scrnx, 0, 0, COL8_FFFFFF, s); /* 显示坐标*/
 	   putblock8_8(binfo->vram, binfo->scrnx, 16, 16, mx, my, mcursor, 16); /* 显示鼠标 */
 	 }
