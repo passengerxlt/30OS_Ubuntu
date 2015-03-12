@@ -5,6 +5,7 @@
 	GLOBAL _io_hlt,_wirte_mem8, io_cli, io_sti, io_stihlt
 	GLOBAL io_in8, io_in16, io_in32
 	GLOBAL io_out8, io_out16, io_out32
+	GLOBAL memcpy32
 	GLOBAL io_load_eflags, io_store_eflags
 	GLOBAL load_gdtr, load_idtr
 	GLOBAL load_cr0, store_cr0
@@ -157,4 +158,20 @@ load_cr0:	; int load_cr0(void)
 store_cr0:	; void store_cr0(int)
 	MOV	EAX, [ESP+4]
 	MOV	CR0, EAX
+	RET
+
+memcpy32:	; void memcpy32(char *, char *, int)
+	MOV	EDI, [ESP+4]
+	MOV	ESI, [ESP+8]
+	MOV	ECX, [ESP+12]
+	CALL	memcpy
+	RET
+
+memcpy:
+	MOV	EAX, [ESI]
+	ADD	ESI, 4
+	MOV	[EDI], EAX
+	ADD	EDI, 4
+	SUB	ECX, 1
+	JNZ	memcpy
 	RET
