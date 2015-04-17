@@ -81,11 +81,6 @@ void timer_settime(struct TIMER *timer, unsigned int timeout)
 			return;	
 		}
 	}
-	/* insert in the end */
-	s->next = timer;
-	timer->next = 0;
-	io_store_eflags(e);
-	return;
 }
 
 void inthandler20(int *esp)
