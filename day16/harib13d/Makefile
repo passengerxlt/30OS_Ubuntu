@@ -26,9 +26,11 @@ haribote.sys : asmhead.bin bootpack.elf Makefile
 haribote.img : ipl10.bin haribote.sys Makefile
 	dd if=/dev/zero	of=haribote.img bs=1024 count=1440
 	dd if=ipl10.bin of=haribote.img bs=512 count=1 conv=notrunc
+	sudo mkdir /mnt/floppy
 	sudo mount haribote.img /mnt/floppy -o loop
 	sudo cp haribote.sys /mnt/floppy
 	sudo umount /mnt/floppy
+	sudo rm -rf /mnt/floppy
 
 %.o : %.c Makefile
 	gcc -m32 -c -g -Wa,-adlhn -c $*.c > $*.anno.s
